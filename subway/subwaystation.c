@@ -7,14 +7,27 @@
 #define FALSE 0
 #define MAX_LINE_LENGTH 1024
 #define MAX_TRACK_LINES 128
+#define MOVEMENT_WEST -1
+#define MOVEMENT_EAST 1
+#define MOVEMENT_NORTH -1
+#define MOVEMENT_SOUTH 1
 
 typedef int bool;
 
-typedef struct HashNode {
-  char *key;
-  int value;
-  struct HashNode *next;
-} HashNode;
+typedef struct STRUCT_STATION {
+  int line_seq;
+  int position;
+  struct STRUCT_STATION *next_station;
+} STRUCT_STATION *PSTRUCT_STATION;
+
+typedef struct STRUCT_TRAIN {
+  int line_seq;
+  int position;
+  int movement_direction;
+  bool is_express;
+  bool is_on_station;
+  struct STRUCT_TRAIN *next_train;
+} STRUCT_TRAIN *PSTRUCT_TRAIN;
 
 char track_map[MAX_TRACK_LINES][MAX_LINE_LENGTH];
 const char *filename = "track.txt";
@@ -23,6 +36,9 @@ int current_index = 1;
 int max_read_line = 0;
 int running_ok = 1;
 int redraw_track = 0;
+STRUCT_TRAIN trains;
+STRUCT_STATION stations;
+
 
 char *read_line_from_file(const char *filename, int line_number, char *buffer) {
   FILE *file = fopen(filename, "r");
@@ -147,32 +163,60 @@ void move_right(char motor_char, int motor_pos) {
   char front_piece = current_line[motor_pos - 1];
 }
 
-bool has_engine(char *line, int linesize) {
-  char *line_pointer
-  int i = 0;
+void setup_subway_station(int line_number, int position) {
+  
+}
+int get_movement_direction(int line_number, int position) {
+  
+}
+void setup_train(int line_number, int position, char *engine_char) {
+  STRUCT_TRAIN *temp_train_ptr=trains;
+  bool is_express = FALSE;
 
-  for (line_pointer = line; i < linesize; i++) {
+  if ( *engine_char == 88 )
+    is_express = TRUE;
 
-    if ( *line_pointer > 65 && *line_pointer < 90 ) {
-      setup_engine_position(*line_pointer);
-    };
-    
-    line_pointer++;
-  };
+  if ( temp_train_ptr->movement_direction == 0 ) {
+    // primeiro trem
+    temp_train_ptr->line_seq = line_number;
+    temp_train_ptr->position = position;
+    temp_train_ptr->is_express = is_express;
+    temp_train_ptr->movement_direction = get_movement_direction(line_number, position);
+    temp_train_ptr->next_train = NULL;
+    return ;
+  }
+  // demais trens
 
-  if (strchr(line, )) {
-    return TRUE; 
-  };
-
-  return FALSE;
 }
 
-void search_trains() {
+bool has_global_data(char *line, int line_size, int line_number) {
+  char *line_pointer;
+  int i = 0;
+
+  for (line_pointer = line; i < line_size; i++, line_pointer++) {
+    if (*line_pointer == 83){
+      setup_subway_station(line_number, i);
+    }
+    else if ( *line_pointer > 65 && *line_pointer < 90 ) {
+      setup_train(line_number, i, line_pointer);
+    }
+
+  };
+
+  return TRUE;
+}
+
+void init_global_data() {
   int current_line;
   int linelen;
+
+  memset(&trains, 0, sizeof(STRUCT_TRAINS));
+  memset(&station, 0, sizeof(STRUCT_STATION));
+  trains.next_train = NULL;
+  stations.next_station = NULL;
   for ( current_line = 0; current_line < max_read_line; current_line++ ) {
     linelen = strlen(track_map[current_line]);
-    if (has_engine( track_map[current_line], linelen)) {
+    if (has_global_data(track_map[current_line], linelen, current_line)) {
       
     };
   };
@@ -223,13 +267,14 @@ int main() {
   };
 
   print_track();
-
+  // reconhecer trens e estacoes
+  init_global_data();
+  // reconhecer sentido dos movimentos
+  setup_train_movement();
+    
   while ( running_ok ){
 
-    // reconhecer trens
-    search_trains();
-    // reconhecer sentido dos movimentos
-    setup_train_movement();
+    
     // checar estacoes e casos especiais
     search_stations();
         //search_crossings();
