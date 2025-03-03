@@ -98,7 +98,7 @@ int read_from_file_set_track() {
 }
 
 void print_track() {
-  int current_line=0;
+  int current_line = 0;
   
 #ifdef LINUX
   system("clear");
